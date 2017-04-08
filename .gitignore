@@ -1,2 +1,5 @@
 wire_journal_48_53.xlsx
 .ipynb_checkpoints
+
+# pickle files
+*.pkl
