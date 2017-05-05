@@ -7,3 +7,5 @@ wire_journal_48_53.xlsx
 __pycache__
 
 /csvs
+
+*.sublime-workspace
