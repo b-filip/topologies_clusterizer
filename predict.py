@@ -135,7 +135,7 @@ class Predictor():
     def _get_class(self, node1, node2):
         return self._extended_node_pairs.loc[node1, node2]["class_"]
     
-    def predict_many(self, df):
+    def predict_many(self, df: pd.DataFrame) -> pd.DataFrame:
         """df must have columns: msg_len, node1, node2.
         Returns table with rows in the same order,
         all other columns dropped and column of ping predictions appended."""
