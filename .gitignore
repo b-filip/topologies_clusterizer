@@ -5,3 +5,5 @@ wire_journal_48_53.xlsx
 *.pkl
 
 __pycache__
+
+/csvs
