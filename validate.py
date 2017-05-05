@@ -35,27 +35,39 @@ def join_ping_data(multiple_tests_results: Iterable[TestResults]) -> pd.DataFram
     )
 
 
-def validate_on(topology_data: TopologyData, training_dir: Path, validation_dirs: Iterable[Path]):
+def validate_per_msg_len(predictions: pd.DataFrame, write_to: Path) -> None:
+    mean_rel_err_per_len = predictions.groupby("msg_len")["relative_error"].mean() \
+        .rename("mean relative error")
+    max_rel_err_per_len = predictions.groupby("msg_len")["relative_error"].max() \
+        .rename("max relative error")
+    pd.concat([mean_rel_err_per_len, max_rel_err_per_len], axis=1).to_csv(write_to)
+    print("Wrote to '{0}'".format(write_to))
+
+
+def validate_on(
+    topology_data: TopologyData, training_dir: Path, validation_dirs: Iterable[Path],
+    output_dir: Path
+) -> None:
     """Trains predictor on data in training_dir. Calculates mean squared error
     and does other validation stuff for data in validation_dirs"""
-    training_dir_basename = training_dir.basename()
-    logging.info("Training on '{training_dir_basename}'.".format(**locals()))
+    logging.info("Training on '{0}'.".format(training_dir.basename()))
     training_data = load_test_results(training_dir)
     if not check_all_classes_covered(topology_data, training_data.hostnames):
         print(
-            "'{training_dir_basename}' doesn't contain test data for at least one class. Skipping."
-                .format(**locals())
+            "'{0}' doesn't contain test data for at least one class. Skipping."
+                .format(training_dir.basename())
         )
         return
     validation_data = join_ping_data(load_test_results(dir_) for dir_ in validation_dirs)
     predictor = Predictor(topology_data, training_data)
     predictions = predictor.predict_many(validation_data)
-    mean_error = (predictions["ping"] - predictions["predicted_ping"]).abs().mean()
-    print(
-        "Trained on '{training_dir_basename}'. Calculated mean absolute error for all other directories."
-            .format(**locals())
-    )
-    print("Mean absolute error = {mean_error}".format(**locals()))
+    predictions["abs_error"] = (predictions["ping"] - predictions["predicted_ping"]).abs()
+    predictions["relative_error"] = (predictions["abs_error"] / predictions["ping"]).fillna(0)
+    #assert 0 not in predictions["ping"]
+    print("Trained on '{0}'. Validated on all other directories.".format(training_dir.basename()))
+    print("mean (absolute error / ping) = {0}".format(predictions["relative_error"].mean(skipna=False)))
+    print("max (absolute error / ping) = {0}".format(predictions["relative_error"].max(skipna=False)))
+    validate_per_msg_len(predictions, output_dir.joinpath(training_dir.basename() + ".csv"))
 
 
 @click.command()
@@ -65,8 +77,14 @@ def validate_on(topology_data: TopologyData, training_dir: Path, validation_dirs
     help="""Path to directory that contains network-tests2 results in subdirectories.
          Can be passed as NT2_TESTS_RESULTS environment variable"""
 )
+@click.option(
+    "--output-dir", "-o", required=True,
+    type=click.Path(exists=True, dir_okay=True, file_okay=False, writable=True, readable=False),
+    help="The program will write csv files to this dir"
+)
 @click.option("--verbose", "-v", is_flag=True)
-def main(tests_results, verbose):
+def main(tests_results, output_dir, verbose):
+    output_dir = Path(output_dir)
     if verbose:
         logging.basicConfig(level=logging.INFO)
     tests_results_dirs = Path(tests_results).dirs()
@@ -74,7 +92,8 @@ def main(tests_results, verbose):
     for directory in tests_results_dirs:
         validate_on(
             topology_data, directory,
-            (dir_ for dir_ in tests_results_dirs if dir_ != directory)
+            (dir_ for dir_ in tests_results_dirs if dir_ != directory),
+            output_dir
         )
         
 
