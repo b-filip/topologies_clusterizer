@@ -31,40 +31,6 @@ def join_ping_data(multiple_tests_results: Iterable[TestResults]) -> pd.DataFram
     )
 
 
-def validate_per_msg_len(predictions: pd.DataFrame, write_to: Path) -> None:
-    mean_rel_err_per_len = predictions.groupby("msg_len")["relative_error"].mean() \
-        .rename("mean relative error")
-    max_rel_err_per_len = predictions.groupby("msg_len")["relative_error"].max() \
-        .rename("max relative error")
-    pd.concat([mean_rel_err_per_len, max_rel_err_per_len], axis=1).to_csv(write_to)
-    print("Wrote to '{0}'".format(write_to))
-
-
-def validate_on(
-    topology_data: TopologyData, training_dir: Path, validation_dirs: Iterable[Path],
-    output_dir: Path
-) -> None:
-    """Trains predictor on data in training_dir. Calculates mean squared error
-    and does other validation stuff for data in validation_dirs"""
-    logging.info("Training on '{0}'.".format(training_dir.basename()))
-    training_data = load_test_results(training_dir)
-    if not check_all_classes_covered(topology_data, training_data.hostnames):
-        print(
-            "'{0}' doesn't contain test data for at least one class. Skipping."
-                .format(training_dir.basename())
-        )
-        return
-    validation_data = join_ping_data(load_test_results(dir_) for dir_ in validation_dirs)
-    predictor = Predictor(topology_data, training_data)
-    predictions = predictor.predict_many(validation_data)
-    predictions["abs_error"] = (predictions["ping"] - predictions["predicted_ping"]).abs()
-    predictions["relative_error"] = (predictions["abs_error"] / predictions["ping"]).fillna(0)
-    print("Trained on '{0}'. Validated on all other directories.".format(training_dir.basename()))
-    print("mean (absolute error / ping) = {0}".format(predictions["relative_error"].mean(skipna=False)))
-    print("max (absolute error / ping) = {0}".format(predictions["relative_error"].max(skipna=False)))
-    validate_per_msg_len(predictions, output_dir.joinpath(training_dir.basename() + ".csv"))
-
-
 def count_validation_only_hostnames(
     training_dataset: TestResults, validation_datasets: Iterable[TestResults]
 ) -> int:
