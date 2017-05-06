@@ -177,14 +177,8 @@ def validate(topology_data: TopologyData, datasets: Iterable[TestResults]) -> No
     help="""Path to directory that contains network-tests2 results in subdirectories.
          Can be passed as NT2_TESTS_RESULTS environment variable"""
 )
-@click.option(
-    "--output-dir", "-o", required=True,
-    type=click.Path(exists=True, dir_okay=True, file_okay=False, writable=True, readable=False),
-    help="The program will write csv files to this dir"
-)
 @click.option("--verbose", "-v", is_flag=True)
-def main(tests_results, output_dir, verbose):
-    output_dir = Path(output_dir)
+def main(tests_results, verbose):
     if verbose:
         logging.basicConfig(level=logging.INFO)
     topology_data = load_topology_data()
