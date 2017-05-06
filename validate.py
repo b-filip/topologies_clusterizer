@@ -12,7 +12,7 @@ import itertools
 
 
 def join_dict_to_table(dict_: Dict[int, pd.DataFrame]) -> pd.DataFrame:
-    """Can be used on test_results.medians.
+    """Can be used on test_results.{medians,means,std_dev}.
     
     Takes a dict (msg_len -> df(node1, node2, ping))
     
@@ -68,8 +68,8 @@ def calc_relative_error(
     predictor = Predictor(topology_data, training_dataset)
     # build df with cols: msg_len, ping, predicted_ping
     predictions = predictor.predict_many(validation_data).drop(["node1", "node2"], axis=1)
-    abs_error = (predictions["ping"] - predictions["predicted_ping"]).abs()
-    predictions["rel_error"] = (abs_error / predictions["ping"]) \
+    abs_error = (predictions["value"] - predictions["predicted_ping"]).abs()
+    predictions["rel_error"] = (abs_error / predictions["value"]) \
         .fillna(0)  # 0/0 returns NaN. I replace it with 0.
     predictions["training_dataset"] = training_dataset.name
     return predictions
