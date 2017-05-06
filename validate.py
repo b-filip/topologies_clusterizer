@@ -3,11 +3,6 @@
 import pandas as pd
 import numpy as np
 from path import Path  # pip install --user path.py
-import re
-from pprint import pprint
-import netCDF4
-from collections import namedtuple
-from random import randint, choice
 import click  # pip install --user click
 import logging
 from predict import Predictor, load_test_results, load_topology_data, TestResults, TopologyData, \
