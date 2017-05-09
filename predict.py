@@ -69,6 +69,7 @@ def load_nc_file_as_matrices(hostnames: Iterable[Any], path: Path) -> Dict[int, 
     are matrix-dataframes with both index and columns representing
     nodes
     """
+    hostnames = list(hostnames)
     with netCDF4.Dataset(path, "r") as dataset:
         step_len = dataset["step_length"][0]
         start_len = dataset["begin_mes_length"][0]
