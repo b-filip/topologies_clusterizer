@@ -103,7 +103,7 @@ def calc_relative_error_for_all(
     )
     mean_rel_error = results["rel_error"].mean(skipna=False)
     max_rel_error = results["rel_error"].max(skipna=False)
-    quantiles = results["rel_error"].quantile([0.5, 0.8, 0.9, 0.95, 0.99], interpolation="midpoint")
+    quantiles = results["rel_error"].quantile([0.01, 0.05, 0.15, 0.3, 0.5, 0.8, 0.9, 0.95, 0.99], interpolation="midpoint")
     print("""Mean of abs(predicted_ping - ping)/ping = {0}
           Max of abs(predicted_ping - ping)/ping = {1}""".format(mean_rel_error, max_rel_error))
     for (percentage, rel_error) in quantiles.iteritems():
